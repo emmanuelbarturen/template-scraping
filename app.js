@@ -2,6 +2,7 @@ import express from 'express';
 import { executeScraper, initializeJobs } from './src/utils/scheduler.js';
 import jobsConfig from './src/config/jobs.config.js';
 import logger from './src/utils/logger.js';
+import { createPool, closePool } from './src/utils/database.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,6 +35,14 @@ app.post('/scraper/run', async (req, res) => {
   }
 });
 
+// Inicializar conexión a base de datos
+try {
+  createPool();
+  logger.info('Database connection initialized');
+} catch (error) {
+  logger.warn('Database connection failed, continuing without DB', { error: error.message });
+}
+
 // Inicializar jobs programados desde configuración
 const scheduledJobs = initializeJobs(jobsConfig);
 logger.info('Jobs initialization completed', { total: scheduledJobs.length });
@@ -55,4 +64,17 @@ process.on('unhandledRejection', (reason, promise) => {
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception', { error: error.message });
   process.exit(1);
+});
+
+// Cerrar conexiones al terminar
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received, closing connections...');
+  await closePool();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  logger.info('SIGINT received, closing connections...');
+  await closePool();
+  process.exit(0);
 });

@@ -13,16 +13,30 @@ Servidor HTTP persistente con scheduler interno, diseñado para ejecutarse con P
 npm install
 ```
 
+### Configuración de MySQL (Opcional)
+
+Si deseas guardar datos en MySQL:
+
+1. Instala MySQL en tu sistema
+2. Ejecuta el script de inicialización: `mysql -u root -p < src/utils/db-init.sql`
+3. Copia `.env.example` a `.env` y configura las credenciales de MySQL
+4. Ver guía completa en: [MYSQL_SETUP.md](MYSQL_SETUP.md)
+
+El sistema funciona sin MySQL, pero no guardará datos en base de datos.
+
 ## Estructura del proyecto
 
 ```
 src/
 ├── config/
 │   ├── index.js           # Configuración general
+│   ├── database.js        # Configuración de MySQL
 │   └── jobs.config.js     # Configuración de jobs programados
 ├── utils/
 │   ├── logger.js          # Logger centralizado
-│   └── scheduler.js       # Sistema de scheduling
+│   ├── scheduler.js       # Sistema de scheduling
+│   ├── database.js        # Funciones de base de datos MySQL
+│   └── db-init.sql        # Script de inicialización de DB
 ├── scrapers/
 │   ├── api/              # Scrapers que consumen APIs
 │   ├── html/             # Scrapers con Cheerio (HTML estático)
@@ -120,15 +134,25 @@ Los jobs se cargan automáticamente al iniciar el servidor.
 ```javascript
 import axios from 'axios';
 import logger from '../../utils/logger.js';
+import { insert, insertMany } from '../../utils/database.js';
 
 export default async function miScraperApi(options = {}) {
   const url = 'https://api.example.com/data';
   logger.info('Calling API', { url });
   
   const response = await axios.get(url);
-  logger.info('Data received', { count: response.data.length });
+  const data = response.data;
   
-  return response.data;
+  // Guardar en MySQL (opcional)
+  await insert('scraped_data', {
+    scraper_name: 'mi-scraper',
+    scraper_type: 'api',
+    data: JSON.stringify(data),
+  });
+  
+  logger.info('Data received and saved', { count: data.length });
+  
+  return data;
 }
 ```
 
