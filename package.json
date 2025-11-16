@@ -1,0 +1,20 @@
+{
+  "name": "beneficios-scraper",
+  "version": "1.0.0",
+  "description": "Template para extracción de datos con API, Cheerio y Puppeteer",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "scrape:api": "SCRAPER_TYPE=api SCRAPER_NAME=linkedin-talents node app.js",
+    "scrape:html": "SCRAPER_TYPE=html SCRAPER_NAME=linkedin-talents node app.js",
+    "scrape:browser": "SCRAPER_TYPE=browser SCRAPER_NAME=linkedin-talents node app.js"
+  },
+  "keywords": ["scraper", "web-scraping", "puppeteer", "cheerio"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "puppeteer": "^21.0.0"
+  }
+}
