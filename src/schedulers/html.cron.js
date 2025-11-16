@@ -1,8 +1,8 @@
-const { runHtmlScraper } = require('../scrapers/html');
-const logger = require('../utils/logger');
+import { runHtmlScraper } from '../scrapers/html/index.js';
+import logger from '../utils/logger.js';
 
 // Entry point for cron jobs that use Cheerio/HTML scrapers
-async function run() {
+export async function run() {
   const name = process.env.SCRAPER_NAME;
   if (!name) {
     throw new Error('SCRAPER_NAME env var is required for HTML cron job');
@@ -16,5 +16,3 @@ async function run() {
     process.exitCode = 1;
   }
 }
-
-module.exports = { run };

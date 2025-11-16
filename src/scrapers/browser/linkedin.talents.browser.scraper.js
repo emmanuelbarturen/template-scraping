@@ -1,7 +1,7 @@
-const puppeteer = require('puppeteer');
-const logger = require('../../utils/logger');
+import puppeteer from 'puppeteer';
+import logger from '../../utils/logger.js';
 
-module.exports = async function linkedinTalentsBrowserScraper(options = {}) {
+export default async function linkedinTalentsBrowserScraper(options = {}) {
   const url = 'https://example.com'; // página de ejemplo
   logger.info('Launching browser for talents page', { url });
 
@@ -23,4 +23,4 @@ module.exports = async function linkedinTalentsBrowserScraper(options = {}) {
   logger.info('Browser data extracted', { title, headingsCount: headings.length });
 
   return { title, headings };
-};
+}

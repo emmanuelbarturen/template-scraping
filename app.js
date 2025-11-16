@@ -1,7 +1,7 @@
-const { run: runApiCron } = require('./src/schedulers/api.cron');
-const { run: runHtmlCron } = require('./src/schedulers/html.cron');
-const { run: runBrowserCron } = require('./src/schedulers/browser.cron');
-const logger = require('./src/utils/logger');
+import { run as runApiCron } from './src/schedulers/api.cron.js';
+import { run as runHtmlCron } from './src/schedulers/html.cron.js';
+import { run as runBrowserCron } from './src/schedulers/browser.cron.js';
+import logger from './src/utils/logger.js';
 
 async function main() {
   const type = (process.env.SCRAPER_TYPE || '').toLowerCase();

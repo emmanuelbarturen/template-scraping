@@ -1,8 +1,8 @@
-const { runBrowserScraper } = require('../scrapers/browser');
-const logger = require('../utils/logger');
+import { runBrowserScraper } from '../scrapers/browser/index.js';
+import logger from '../utils/logger.js';
 
 // Entry point for cron jobs that use Puppeteer/browser scrapers
-async function run() {
+export async function run() {
   const name = process.env.SCRAPER_NAME;
   if (!name) {
     throw new Error('SCRAPER_NAME env var is required for BROWSER cron job');
@@ -16,5 +16,3 @@ async function run() {
     process.exitCode = 1;
   }
 }
-
-module.exports = { run };

@@ -1,8 +1,8 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
-const logger = require('../../utils/logger');
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+import logger from '../../utils/logger.js';
 
-module.exports = async function linkedinTalentsHtmlScraper(options = {}) {
+export default async function linkedinTalentsHtmlScraper(options = {}) {
   const url = 'https://example.com'; // página de ejemplo
   logger.info('Fetching HTML page', { url });
 
@@ -20,4 +20,4 @@ module.exports = async function linkedinTalentsHtmlScraper(options = {}) {
   logger.info('HTML data extracted', { title, headingsCount: headings.length });
 
   return { title, headings };
-};
+}

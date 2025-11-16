@@ -1,11 +1,12 @@
-const logger = require('../../utils/logger');
+import logger from '../../utils/logger.js';
+import linkedinTalentsBrowserScraper from './linkedin.talents.browser.scraper.js';
 
 // Registry of Puppeteer/browser scrapers
 const browserScrapers = {
-  'linkedin-talents': require('./linkedin.talents.browser.scraper'),
+  'linkedin-talents': linkedinTalentsBrowserScraper,
 };
 
-async function runBrowserScraper(name, options = {}) {
+export async function runBrowserScraper(name, options = {}) {
   const scraper = browserScrapers[name];
   if (!scraper) {
     throw new Error(`Browser scraper not found: ${name}`);
@@ -13,7 +14,3 @@ async function runBrowserScraper(name, options = {}) {
   logger.info('Running browser scraper', { name, options });
   return scraper(options);
 }
-
-module.exports = {
-  runBrowserScraper,
-};

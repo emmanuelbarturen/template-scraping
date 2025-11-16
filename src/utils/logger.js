@@ -5,7 +5,7 @@ function log(level, message, meta = {}) {
   console.log(`[${new Date().toISOString()}] [${level.toUpperCase()}] ${message}${payload}`);
 }
 
-module.exports = {
+export default {
   info: (msg, meta) => log('info', msg, meta),
   error: (msg, meta) => log('error', msg, meta),
   warn: (msg, meta) => log('warn', msg, meta),

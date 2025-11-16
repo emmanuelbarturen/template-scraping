@@ -1,7 +1,7 @@
-const axios = require('axios');
-const logger = require('../../utils/logger');
+import axios from 'axios';
+import logger from '../../utils/logger.js';
 
-module.exports = async function linkedinTalentsApiScraper(options = {}) {
+export default async function linkedinTalentsApiScraper(options = {}) {
   const url = 'https://jsonplaceholder.typicode.com/users'; // API de ejemplo
   logger.info('Calling talents API', { url });
 
@@ -12,4 +12,4 @@ module.exports = async function linkedinTalentsApiScraper(options = {}) {
   logger.info('API data received', { count: Array.isArray(data) ? data.length : 1 });
 
   return data;
-};
+}

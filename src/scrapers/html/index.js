@@ -1,11 +1,12 @@
-const logger = require('../../utils/logger');
+import logger from '../../utils/logger.js';
+import linkedinTalentsHtmlScraper from './linkedin.talents.html.scraper.js';
 
 // Registry of Cheerio/HTML scrapers
 const htmlScrapers = {
-  'linkedin-talents': require('./linkedin.talents.html.scraper'),
+  'linkedin-talents': linkedinTalentsHtmlScraper,
 };
 
-async function runHtmlScraper(name, options = {}) {
+export async function runHtmlScraper(name, options = {}) {
   const scraper = htmlScrapers[name];
   if (!scraper) {
     throw new Error(`HTML scraper not found: ${name}`);
@@ -13,7 +14,3 @@ async function runHtmlScraper(name, options = {}) {
   logger.info('Running HTML scraper', { name, options });
   return scraper(options);
 }
-
-module.exports = {
-  runHtmlScraper,
-};
