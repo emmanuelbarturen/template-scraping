@@ -23,6 +23,6 @@
     "express": "^4.21.2",
     "mysql2": "^3.11.5",
     "node-cron": "^3.0.3",
-    "puppeteer": "^23.11.1"
+    "puppeteer": "^24.30.0"
   }
 }
