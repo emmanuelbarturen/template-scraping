@@ -5,6 +5,8 @@ Template base para extracción de datos con 3 estrategias diferentes:
 - **HTML/Cheerio**: Extracción de HTML estático
 - **Browser/Puppeteer**: Simulación de navegación para sitios dinámicos
 
+Servidor HTTP persistente con scheduler interno, diseñado para ejecutarse con PM2.
+
 ## Instalación
 
 ```bash
@@ -15,56 +17,100 @@ npm install
 
 ```
 src/
-├── config/           # Configuración general
-├── utils/            # Utilidades (logger, etc.)
+├── config/
+│   ├── index.js           # Configuración general
+│   └── jobs.config.js     # Configuración de jobs programados
+├── utils/
+│   ├── logger.js          # Logger centralizado
+│   └── scheduler.js       # Sistema de scheduling
 ├── scrapers/
-│   ├── api/         # Scrapers que consumen APIs
-│   ├── html/        # Scrapers con Cheerio (HTML estático)
-│   └── browser/     # Scrapers con Puppeteer (navegación)
-└── schedulers/      # Puntos de entrada para cron jobs
+│   ├── api/              # Scrapers que consumen APIs
+│   ├── html/             # Scrapers con Cheerio (HTML estático)
+│   └── browser/          # Scrapers con Puppeteer (navegación)
+└── schedulers/           # (Deprecated) Usar jobs.config.js
 ```
 
 ## Uso
 
-### Ejecución manual
+### Iniciar el servidor
 
-Cada tipo de scraper se ejecuta con variables de entorno:
-
-**Scraper por API:**
+**Desarrollo:**
 ```bash
-SCRAPER_TYPE=api SCRAPER_NAME=linkedin-talents node app.js
-# o usando npm script:
-npm run scrape:api
+npm run dev
 ```
 
-**Scraper por HTML/Cheerio:**
+**Producción:**
 ```bash
-SCRAPER_TYPE=html SCRAPER_NAME=linkedin-talents node app.js
-# o usando npm script:
-npm run scrape:html
+npm start
 ```
 
-**Scraper por Browser/Puppeteer:**
+**Con PM2:**
 ```bash
-SCRAPER_TYPE=browser SCRAPER_NAME=linkedin-talents node app.js
-# o usando npm script:
-npm run scrape:browser
+pm2 start ecosystem.config.cjs
+pm2 logs
+pm2 status
 ```
 
-### Configuración con Cron
+### Ejecutar scrapers manualmente vía HTTP
 
-Para ejecutar scrapers automáticamente, agrega entradas a tu crontab:
+Una vez que el servidor está corriendo, puedes ejecutar scrapers bajo demanda:
 
 ```bash
-# Ejecutar scraper API cada día a las 2am
-0 2 * * * cd /ruta/al/proyecto && SCRAPER_TYPE=api SCRAPER_NAME=linkedin-talents node app.js >> logs/api.log 2>&1
+# Health check
+curl http://localhost:3000/health
 
-# Ejecutar scraper HTML cada hora
-0 * * * * cd /ruta/al/proyecto && SCRAPER_TYPE=html SCRAPER_NAME=linkedin-talents node app.js >> logs/html.log 2>&1
+# Ejecutar scraper API
+curl -X POST http://localhost:3000/scraper/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "api",
+    "name": "linkedin-talents",
+    "options": {}
+  }'
 
-# Ejecutar scraper Browser cada 6 horas
-0 */6 * * * cd /ruta/al/proyecto && SCRAPER_TYPE=browser SCRAPER_NAME=linkedin-talents node app.js >> logs/browser.log 2>&1
+# Ejecutar scraper HTML
+curl -X POST http://localhost:3000/scraper/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "html",
+    "name": "linkedin-talents"
+  }'
+
+# Ejecutar scraper Browser
+curl -X POST http://localhost:3000/scraper/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "browser",
+    "name": "linkedin-talents"
+  }'
 ```
+
+### Configurar tareas programadas (Cron Jobs)
+
+Edita `src/config/jobs.config.js` para agregar jobs programados:
+
+```javascript
+export default [
+  {
+    name: 'linkedin-talents-api-daily',
+    schedule: '0 2 * * *',        // Cada día a las 2am
+    type: 'api',
+    scraper: 'linkedin-talents',
+    enabled: true,                 // Cambiar a true para activar
+    options: {},
+  },
+  {
+    name: 'linkedin-talents-html-hourly',
+    schedule: '0 * * * *',         // Cada hora
+    type: 'html',
+    scraper: 'linkedin-talents',
+    enabled: true,
+    options: {},
+  },
+];
+```
+
+Los jobs se cargan automáticamente al iniciar el servidor.
 
 ## Agregar nuevos scrapers
 
@@ -72,10 +118,10 @@ Para ejecutar scrapers automáticamente, agrega entradas a tu crontab:
 
 **Para API** (`src/scrapers/api/mi-scraper.api.scraper.js`):
 ```javascript
-const axios = require('axios');
-const logger = require('../../utils/logger');
+import axios from 'axios';
+import logger from '../../utils/logger.js';
 
-module.exports = async function miScraperApi(options = {}) {
+export default async function miScraperApi(options = {}) {
   const url = 'https://api.example.com/data';
   logger.info('Calling API', { url });
   
@@ -83,16 +129,16 @@ module.exports = async function miScraperApi(options = {}) {
   logger.info('Data received', { count: response.data.length });
   
   return response.data;
-};
+}
 ```
 
 **Para HTML/Cheerio** (`src/scrapers/html/mi-scraper.html.scraper.js`):
 ```javascript
-const axios = require('axios');
-const cheerio = require('cheerio');
-const logger = require('../../utils/logger');
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+import logger from '../../utils/logger.js';
 
-module.exports = async function miScraperHtml(options = {}) {
+export default async function miScraperHtml(options = {}) {
   const url = 'https://example.com/page';
   logger.info('Fetching HTML', { url });
   
@@ -106,15 +152,15 @@ module.exports = async function miScraperHtml(options = {}) {
   
   logger.info('Data extracted', { count: data.length });
   return data;
-};
+}
 ```
 
 **Para Browser/Puppeteer** (`src/scrapers/browser/mi-scraper.browser.scraper.js`):
 ```javascript
-const puppeteer = require('puppeteer');
-const logger = require('../../utils/logger');
+import puppeteer from 'puppeteer';
+import logger from '../../utils/logger.js';
 
-module.exports = async function miScraperBrowser(options = {}) {
+export default async function miScraperBrowser(options = {}) {
   const url = 'https://example.com/page';
   logger.info('Launching browser', { url });
   
@@ -130,7 +176,7 @@ module.exports = async function miScraperBrowser(options = {}) {
   logger.info('Data extracted', { count: data.length });
   
   return data;
-};
+}
 ```
 
 ### 2. Registrar el scraper
@@ -139,16 +185,33 @@ Edita el archivo `index.js` correspondiente y agrega tu scraper al objeto de reg
 
 **`src/scrapers/api/index.js`:**
 ```javascript
+import miScraperApi from './mi-scraper.api.scraper.js';
+
 const apiScrapers = {
-  'linkedin-talents': require('./linkedin.talents.api.scraper'),
-  'mi-scraper': require('./mi-scraper.api.scraper'), // ← agregar aquí
+  'linkedin-talents': linkedinTalentsApiScraper,
+  'mi-scraper': miScraperApi, // ← agregar aquí
 };
 ```
 
 ### 3. Ejecutar
 
+**Vía HTTP:**
 ```bash
-SCRAPER_TYPE=api SCRAPER_NAME=mi-scraper node app.js
+curl -X POST http://localhost:3000/scraper/run \
+  -H "Content-Type: application/json" \
+  -d '{"type": "api", "name": "mi-scraper"}'
+```
+
+**O agregar a jobs programados en `src/config/jobs.config.js`:**
+```javascript
+{
+  name: 'mi-scraper-daily',
+  schedule: '0 3 * * *',
+  type: 'api',
+  scraper: 'mi-scraper',
+  enabled: true,
+  options: {},
+}
 ```
 
 ## Ejemplos incluidos
